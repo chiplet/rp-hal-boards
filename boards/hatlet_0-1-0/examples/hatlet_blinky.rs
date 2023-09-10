@@ -10,15 +10,6 @@
 #![no_std]
 #![no_main]
 
-use core::convert::TryInto;
-
-use hal::gpio::DynPinId;
-use hal::gpio::FunctionI2C;
-use hal::gpio::FunctionSio;
-use hal::gpio::Pin;
-use hal::gpio::PullDown;
-use hal::gpio::PullNone;
-use hal::gpio::SioOutput;
 // The macro for our start-up function
 use hatlet_0_1_0::entry;
 
@@ -88,7 +79,7 @@ fn main() -> ! {
     );
 
     // Set board LEDs as outputs
-    let mut leds: [Pin<DynPinId, FunctionSio<SioOutput>, PullDown>; 2]  = [
+    let mut leds = [
         pins.led0.into_push_pull_output().into_dyn_pin(),
         pins.led1.into_push_pull_output().into_dyn_pin(),
     ];

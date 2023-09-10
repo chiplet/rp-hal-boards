@@ -10,8 +10,9 @@
 #![no_std]
 #![no_main]
 
+use hal::gpio::{PullDown, SioOutput, FunctionSio};
 // The macro for our start-up function
-use rp_pico::entry;
+use hatlet_0_1_0::entry;
 
 use cortex_m::prelude::*;
 
@@ -27,11 +28,11 @@ use panic_halt as _;
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access
-use rp_pico::hal::pac;
+use hatlet_0_1_0::hal::pac;
 
 // A shorter alias for the Hardware Abstraction Layer, which provides
 // higher-level drivers.
-use rp_pico::hal;
+use hatlet_0_1_0::hal;
 
 #[entry]
 fn main() -> ! {
@@ -45,7 +46,7 @@ fn main() -> ! {
     //
     // The default is to generate a 125 MHz system clock
     let clocks = hal::clocks::init_clocks_and_plls(
-        rp_pico::XOSC_CRYSTAL_FREQ,
+        hatlet_0_1_0::XOSC_CRYSTAL_FREQ,
         pac.XOSC,
         pac.CLOCKS,
         pac.PLL_SYS,
@@ -64,24 +65,32 @@ fn main() -> ! {
     let sio = hal::Sio::new(pac.SIO);
 
     // Set the pins up according to their function on this particular board
-    let pins = rp_pico::Pins::new(
+    let pins = hatlet_0_1_0::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
         sio.gpio_bank0,
         &mut pac.RESETS,
     );
 
-    let mut led_pin = pins.led.into_push_pull_output();
+    // Set board LEDs as outputs
+    let mut leds = [
+        pins.led0.into_push_pull_output().into_dyn_pin(),
+        pins.led1.into_push_pull_output().into_dyn_pin(),
+    ];
 
     // Blink the LED at 1 Hz
     loop {
         // LED on, and wait for 500ms
-        led_pin.set_high().unwrap();
+        for led in &mut leds {
+            led.set_high().unwrap();
+        }
         count_down.start(500.millis());
         let _ = nb::block!(count_down.wait());
-
+        
         // LED off, and wait for 500ms
-        led_pin.set_low().unwrap();
+        for led in &mut leds {
+            led.set_low().unwrap();
+        }
         count_down.start(500.millis());
         let _ = nb::block!(count_down.wait());
     }

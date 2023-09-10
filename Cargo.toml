@@ -24,4 +24,5 @@ members = [
     "boards/vcc-gnd-yd-rp2040",
     "boards/waveshare-rp2040-zero",
     "boards/waveshare-rp2040-lcd-0-96",
+    "boards/hatlet_0-1-0",
 ]

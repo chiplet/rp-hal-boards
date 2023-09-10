@@ -10,26 +10,36 @@
 #![no_std]
 #![no_main]
 
+use core::convert::TryInto;
+
+use hal::gpio::DynPinId;
+use hal::gpio::FunctionI2C;
+use hal::gpio::FunctionSio;
+use hal::gpio::Pin;
+use hal::gpio::PullDown;
+use hal::gpio::PullNone;
+use hal::gpio::SioOutput;
 // The macro for our start-up function
-use rp_pico::entry;
+use hatlet_0_1_0::entry;
 
 // GPIO traits
 use embedded_hal::digital::v2::OutputPin;
 
+use heapless::pool::Box;
 // Ensure we halt the program on panic (if we don't mention this crate it won't
 // be linked)
 use panic_halt as _;
 
 // Pull in any important traits
-use rp_pico::hal::prelude::*;
+use hatlet_0_1_0::hal::prelude::*;
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access
-use rp_pico::hal::pac;
+use hatlet_0_1_0::hal::pac;
 
 // A shorter alias for the Hardware Abstraction Layer, which provides
 // higher-level drivers.
-use rp_pico::hal;
+use hatlet_0_1_0::hal;
 
 /// Entry point to our bare-metal application.
 ///
@@ -51,7 +61,7 @@ fn main() -> ! {
     //
     // The default is to generate a 125 MHz system clock
     let clocks = hal::clocks::init_clocks_and_plls(
-        rp_pico::XOSC_CRYSTAL_FREQ,
+        hatlet_0_1_0::XOSC_CRYSTAL_FREQ,
         pac.XOSC,
         pac.CLOCKS,
         pac.PLL_SYS,
@@ -70,21 +80,28 @@ fn main() -> ! {
     let sio = hal::Sio::new(pac.SIO);
 
     // Set the pins up according to their function on this particular board
-    let pins = rp_pico::Pins::new(
+    let pins = hatlet_0_1_0::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
         sio.gpio_bank0,
         &mut pac.RESETS,
     );
 
-    // Set the LED to be an output
-    let mut led_pin = pins.led.into_push_pull_output();
+    // Set board LEDs as outputs
+    let mut leds: [Pin<DynPinId, FunctionSio<SioOutput>, PullDown>; 2]  = [
+        pins.led0.into_push_pull_output().into_dyn_pin(),
+        pins.led1.into_push_pull_output().into_dyn_pin(),
+    ];
 
-    // Blink the LED at 1 Hz
+    // Blink the LEDs at 1 Hz
     loop {
-        led_pin.set_high().unwrap();
+        for led in &mut leds {
+            led.set_high().unwrap();
+        }
         delay.delay_ms(500);
-        led_pin.set_low().unwrap();
+        for led in &mut leds {
+            led.set_low().unwrap();
+        }
         delay.delay_ms(500);
     }
 }
